@@ -43,8 +43,6 @@ export const resolvers = {
 		CreateExercise: async (_: any, data: any) => {
 			const workoutID = await WorkoutM.findById(data.workoutId)
 			if (workoutID) {
-				
-			
 			await ExerciseM.init();
 			const exercise = new ExerciseM(data);
 			let createdExercise: any;
