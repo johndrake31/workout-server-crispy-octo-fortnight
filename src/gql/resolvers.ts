@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 import UserModel from "../models/User";
 import WorkoutM from "../models/Workout";
 import ExerciseM from "../models/Exercise";
+import bcrypt from 'bcryptjs';
+import { ApolloError } from 'apollo-server';
+
+import jsonwebtoken from "jsonwebtoken";
+import * as dotenv from "dotenv";
+dotenv.config({ path: __dirname+'/.env' });
 
 export const resolvers = {
 	Query: {
@@ -12,13 +18,32 @@ export const resolvers = {
 		getAllExercises: async () => await ExerciseM.find({}),
 	},
 	Mutation: {
-		createUser: async (_: any, data: any) => {
-			await UserModel.init();
-			const newUser = new UserModel(data);
-			newUser._id = new mongoose.Types.ObjectId();
-			// generate a dynamic id
-			return await newUser.save();
+		createUser: async (_: any, email: string,
+			password: string) => {
+				try{
+			const userExists = await UserModel.findOne({email});
+			if (!userExists) {
+				const newUser = new UserModel();
+				newUser.password = await bcrypt.hash(password, 12);
+				newUser.email = email;
+				newUser._id = new mongoose.Types.ObjectId();
+				const user =  await newUser.save();
+				if(user){
+					user.roles?.push('user');
+					return jsonwebtoken.sign(
+						{  email: user.email, id: user._id },
+						process.env.JWT_SECRET!,
+						{ expiresIn: '1y' }
+					)
+				}
+			}else{
+				throw new Error("User already exists");	
+			}
+		} catch (error) {
+			throw new ApolloError(`${error}`);
+		}
 		},
+
 		deleteUser: async (_: any, { email }: any) => {
 			const user = await UserModel.findOne({ email });
 			console.log(user);

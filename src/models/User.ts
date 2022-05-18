@@ -4,6 +4,7 @@ interface IUser{
     email: string;
     password: string;
     createWorkout?:string[];
+    roles?:string[];
 }
 
 const Schema = mongoose.Schema;
@@ -17,7 +18,8 @@ const userSchema = new Schema<IUser>({
         type: String,
         required: true
     },
-    createWorkout: [{type: String}]
+    createWorkout: [{type: String}],
+    roles: [{type: String}]
 })
 
 export default mongoose.model('User', userSchema);
